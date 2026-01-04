@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -31,17 +32,28 @@ func getTestParcel() Parcel {
 // TestAddGetDelete проверяет добавление, получение и удаление посылки
 func TestAddGetDelete(t *testing.T) {
 	// prepare
-	db, err := // настройте подключение к БД
+	db, err := sql.Open("sqlite", "tracker.db")// настройте подключение к БД
 	store := NewParcelStore(db)
+	require.NoError(t, err)
 	parcel := getTestParcel()
 
 	// add
 	// добавьте новую посылку в БД, убедитесь в отсутствии ошибки и наличии идентификатора
+	testAdd, err := store.Add(parcel)
 
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, testAdd)
+	assert.NotEmpty(t, parcel.Number)
+	assert.NotEmpty(t, parcel.Client)
+	assert.NotEmpty(t, parcel.Status)
+	assert.NotEmpty(t, parcel.Address)
+	assert.NotEmpty(t, parcel.CreatedAt)
 	// get
 	// получите только что добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что значения всех полей в полученном объекте совпадают со значениями полей в переменной parcel
-
+	testGet, err := store.Get(1)
+	require.NoError(t, err)
 	// delete
 	// удалите добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что посылку больше нельзя получить из БД

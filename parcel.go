@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 )
 
 type ParcelStore struct {
@@ -14,7 +15,10 @@ func NewParcelStore(db *sql.DB) ParcelStore {
 
 func (s ParcelStore) Add(p Parcel) (int, error) {
 	// реализуйте добавление строки в таблицу parcel, используйте данные из переменной p
-	res, err := s.db.Exec("INSERT INTO parcel (client, status, address, created_at) VALUES (:client, :status, :address, :created_at)",
+	msg := `INSERT INTO parcel (client, status, address, created_at)
+	VALUES (:client, :status, :address, :created_at)`
+
+	res, err := s.db.Exec(msg,
 		sql.Named("client", p.Client),
 		sql.Named("status", p.Status),
 		sql.Named("address", p.Address),
@@ -33,12 +37,17 @@ func (s ParcelStore) Add(p Parcel) (int, error) {
 func (s ParcelStore) Get(number int) (Parcel, error) {
 	// реализуйте чтение строки по заданному number
 	// здесь из таблицы должна вернуться только одна строка
-	rows, err := s.db.Query("SELECT * FROM parcel WHERE id = ?", number)
+	if number <= 0 {
+		return Parcel{}, errors.New("Invalid id value")
+	}
+
+	rows, err := s.db.Query("SELECT * FROM parcel WHERE id = :id", sql.Named("id", number))
 	if err != nil {
 		return Parcel{}, err
 	}
 	defer rows.Close()
 	defer s.db.Close()
+
 	// заполните объект Parcel данными из таблицы
 	p := Parcel{}
 	rows.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt)
